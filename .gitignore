@@ -1,0 +1,13 @@
+.vscode/*
+**/.DS_Store
+**/.ipynb_checkpoints
+**/__pycache__
+
+# **/*.p
+# **/*.pkl
+# **/*.png
+# **/*.pt
+# **/record*.txt
+# **/*.zip
+
+
