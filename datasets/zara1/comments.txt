@@ -1,0 +1,2 @@
+crowds_zara01_train.txt -> train.txt
+crowds_zara01_val.txt -> val.txt

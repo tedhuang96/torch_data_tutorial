@@ -3,7 +3,8 @@
 **/.ipynb_checkpoints
 **/__pycache__
 
-# **/*.p
+datasets/**/*.p
+torch_data_tutorial/*
 # **/*.pkl
 # **/*.png
 # **/*.pt
