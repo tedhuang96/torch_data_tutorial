@@ -4,7 +4,7 @@
 **/__pycache__
 
 datasets/**/*.p
-torch_data_tutorial/*
+torch_data_tutorial*/*
 # **/*.pkl
 # **/*.png
 # **/*.pt

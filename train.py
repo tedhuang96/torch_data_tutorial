@@ -2,8 +2,8 @@ import os
 import sys
 
 # pkg_path = '.'
+sys.path.append('.')
 pkg_path = 'torch_data_tutorial'
-sys.path.append(pkg_path)
 from os.path import join, abspath, isfile, isdir
 from os import makedirs, listdir
 

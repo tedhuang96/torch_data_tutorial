@@ -1,6 +1,8 @@
 import os
 import math
 import sys
+sys.path.append('.')
+pkg_path = 'torch_data_tutorial'
 import torch
 import numpy as np
 from torch.utils.data import Dataset
@@ -13,6 +15,7 @@ from utils import *
 from metrics import * 
 from model import social_stgcnn
 import copy
+
 
 
 parser = argparse.ArgumentParser()
@@ -175,13 +178,6 @@ for feta in range(len(paths)):
         #Data prep     
         obs_seq_len = args.obs_seq_len
         pred_seq_len = args.pred_seq_len
-        data_set = './datasets/'+args.dataset+'/'
-
-        # dset_test = TrajectoryDataset(
-        #         data_set+'test/',
-        #         obs_len=obs_seq_len,
-        #         pred_len=pred_seq_len,
-        #         skip=1,norm_lap_matr=True)
         pkg_path = 'torch_data_tutorial'
         loader_test = load_dataset(args, pkg_path, subfolder='test', num_workers=1)
         # loader_test = DataLoader(
