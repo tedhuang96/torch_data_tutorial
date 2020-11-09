@@ -20,8 +20,11 @@ import copy
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--pretrained', action="store_true", default=False,
-                    help='Use pretrained model from author github.')
-arg_pretrained = parser.parse_args()
+                    help='Use pretrained model we trained using 200 epochs.')
+parser.add_argument('--original', action="store_true", default=False,
+                    help='Use original model from author github.')
+
+arg_po = parser.parse_args()
 
 
 
@@ -38,34 +41,17 @@ def test(KSTEPS=20):
         batch = [tensor.cuda() for tensor in batch]
         obs_traj, pred_traj_gt, obs_traj_rel, pred_traj_gt_rel, non_linear_ped,\
             loss_mask,V_obs,A_obs,V_tr,A_tr = batch
-        # A_tr is actually never used.
-
         num_of_objs = obs_traj_rel.shape[1]
 
         #Forward
-        #V_obs = batch,seq,node,feat
-        #V_obs_tmp = batch,feat,seq,node
         V_obs_tmp =V_obs.permute(0,3,1,2)
-
         V_pred,_ = model(V_obs_tmp,A_obs.squeeze())
-        # print(V_pred.shape)
-        # torch.Size([1, 5, 12, 2])
-        # torch.Size([12, 2, 5])
         V_pred = V_pred.permute(0,2,3,1)
-        # torch.Size([1, 12, 2, 5])>>seq,node,feat
-        # V_pred= torch.rand_like(V_tr).cuda()
-
-
         V_tr = V_tr.squeeze()
         A_tr = A_tr.squeeze()
         V_pred = V_pred.squeeze()
         num_of_objs = obs_traj_rel.shape[1]
         V_pred,V_tr =  V_pred[:,:num_of_objs,:],V_tr[:,:num_of_objs,:]
-        #print(V_pred.shape)
-
-        #For now I have my bi-variate parameters 
-        #normx =  V_pred[:,:,0:1]
-        #normy =  V_pred[:,:,1:2]
         sx = torch.exp(V_pred[:,:,2]) #sx
         sy = torch.exp(V_pred[:,:,3]) #sy
         corr = torch.tanh(V_pred[:,:,4]) #corr
@@ -76,45 +62,31 @@ def test(KSTEPS=20):
         cov[:,:,1,0]= corr*sx*sy
         cov[:,:,1,1]= sy*sy
         mean = V_pred[:,:,0:2]
-        
         mvnormal = torchdist.MultivariateNormal(mean,cov)
 
 
         ### Rel to abs 
-        ##obs_traj.shape = torch.Size([1, 6, 2, 8]) Batch, Ped ID, x|y, Seq Len 
-        
         #Now sample 20 samples
         ade_ls = {}
         fde_ls = {}
         V_x = seq_to_nodes(obs_traj.data.cpu().numpy().copy())
         V_x_rel_to_abs = nodes_rel_to_nodes_abs(V_obs.data.cpu().numpy().squeeze().copy(),
                                                  V_x[0,:,:].copy())
-
         V_y = seq_to_nodes(pred_traj_gt.data.cpu().numpy().copy())
         V_y_rel_to_abs = nodes_rel_to_nodes_abs(V_tr.data.cpu().numpy().squeeze().copy(),
                                                  V_x[-1,:,:].copy())
-        
         raw_data_dict[step] = {}
         raw_data_dict[step]['obs'] = copy.deepcopy(V_x_rel_to_abs)
         raw_data_dict[step]['trgt'] = copy.deepcopy(V_y_rel_to_abs)
         raw_data_dict[step]['pred'] = []
-
         for n in range(num_of_objs):
             ade_ls[n]=[]
             fde_ls[n]=[]
-
         for k in range(KSTEPS):
-
             V_pred = mvnormal.sample()
-
-
-
-            #V_pred = seq_to_nodes(pred_traj_gt.data.numpy().copy())
             V_pred_rel_to_abs = nodes_rel_to_nodes_abs(V_pred.data.cpu().numpy().squeeze().copy(),
                                                      V_x[-1,:,:].copy())
             raw_data_dict[step]['pred'].append(copy.deepcopy(V_pred_rel_to_abs))
-            
-           # print(V_pred_rel_to_abs.shape) #(12, 3, 2) = seq, ped, location
             for n in range(num_of_objs):
                 pred = [] 
                 target = []
@@ -136,8 +108,10 @@ def test(KSTEPS=20):
     fde_ = sum(fde_bigls)/len(fde_bigls)
     return ade_,fde_,raw_data_dict
 
-if arg_pretrained.pretrained:
+if arg_po.original:
     paths = ['torch_data_tutorial/checkpoint/social-stgcnn-zara1']
+elif arg_po.pretrained:
+    paths = ['torch_data_tutorial/checkpoint/auth-zara1-pretrained']
 else:
     paths = ['torch_data_tutorial/checkpoint/auth-zara1']
 KSTEPS=20
@@ -165,7 +139,7 @@ for feta in range(len(paths)):
         with open(args_path,'rb') as f: 
             args = pickle.load(f)
         
-        if arg_pretrained:
+        if arg_po.original:
             args.attn_mech = 'auth'
 
         stats= exp_path+'/constant_metrics.pkl'
@@ -173,20 +147,11 @@ for feta in range(len(paths)):
             cm = pickle.load(f)
         print("Stats:",cm)
 
-
-
         #Data prep     
         obs_seq_len = args.obs_seq_len
         pred_seq_len = args.pred_seq_len
         pkg_path = 'torch_data_tutorial'
         loader_test = load_dataset(args, pkg_path, subfolder='test', num_workers=1)
-        # loader_test = DataLoader(
-        #         dset_test,
-        #         batch_size=1,#This is irrelative to the args batch size parameter
-        #         shuffle =False,
-        #         num_workers=1)
-
-
 
         #Defining the model 
         model = social_stgcnn(n_stgcnn =args.n_stgcnn,n_txpcnn=args.n_txpcnn,
