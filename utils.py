@@ -337,7 +337,7 @@ def create_datasets_test(args, pkg_path, save_datasets=True):
         dsets[subfolder] = dset
     return dsets
 
-def load_dataset(args, pkg_path, subfolder='train', num_workers=4):
+def load_dataset(args, pkg_path, subfolder='train', num_workers=1):
     """
     load datasets into a DataLoader object.
     inputs:
@@ -353,6 +353,7 @@ def load_dataset(args, pkg_path, subfolder='train', num_workers=4):
     result_filename = args.dataset+'_dset_'+subfolder+'_'+args.attn_mech+'.pt'
     dataset_folderpath = os.path.join(pkg_path, 'datasets', args.dataset)
     dset = torch.load(os.path.join(dataset_folderpath, result_filename))
+    print(os.path.join(dataset_folderpath, result_filename)+' is loaded.')
     if subfolder == 'train':
         shuffle = True
     else:
