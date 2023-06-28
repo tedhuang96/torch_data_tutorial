@@ -74,7 +74,7 @@ def seq_to_graph(seq_, seq_rel, attn_mech='glob_kip'):
                     A[s, h, k] = l2_norm
                     A[s, k, h] = l2_norm
             A_hat = A[s, :, :]+np.eye(max_nodes)
-            G = nx.DiGraph(A[s, :, :])
+            G = nx.Graph(A[s, :, :])
             A[s, :, :] = nx.normalized_laplacian_matrix(G).toarray()
             # zhe # Someone on the github issues and I spotted that they actually use the function wrong.
             # zhe # so they actually have a negative value for the attention.
